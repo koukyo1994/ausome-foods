@@ -1,3 +1,6 @@
+# config
+MAX_RETRY = 5
+
 # files
 URL_FILE = "urls.json"
 CREDENTIALS = "credentials.json"

@@ -1,4 +1,5 @@
 import urllib.parse
+import urllib.error
 
 import bs4
 
@@ -52,18 +53,24 @@ def tabelog(url: str) -> Dict[str, str]:
     page_number = random.choice(n_rst_pages) + 1
 
     soup = U.fetch_one_page(url, page_number)
-    rst_url, name = _random_choice_rst(soup)
-    result_dict["rst_url"] = rst_url
-    rst_url = urllib.parse.urljoin(rst_url, C.PHOTO_SUBDIR_TABELOG) + "/"
-    result_dict["rst_name"] = name
+    for _ in range(C.MAX_RETRY):
+        try:
+            rst_url, name = _random_choice_rst(soup)
+            result_dict["rst_url"] = rst_url
+            rst_url = urllib.parse.urljoin(rst_url,
+                                           C.PHOTO_SUBDIR_TABELOG) + "/"
+            result_dict["rst_name"] = name
 
-    soup = U.fetch_one_page(rst_url, 1)
-    n_img_pages = _get_total_page_num(soup)
-    page_number = random.choice(n_img_pages) + 1
+            img_soup = U.fetch_one_page(rst_url, 1)
+            n_img_pages = _get_total_page_num(img_soup)
+            page_number = random.choice(n_img_pages) + 1
 
-    img_page_url = rst_url + "1/smp0/D-normal/" + str(page_number)
-    soup = U.fetch_url(img_page_url)
-    img_url, title = _random_choice_img(soup)
+            img_page_url = rst_url + "1/smp0/D-normal/" + str(page_number)
+            img_soup = U.fetch_url(img_page_url)
+            img_url, title = _random_choice_img(img_soup)
+            break
+        except urllib.error.HTTPError:
+            continue
     result_dict["img_name"] = title
     result_dict["img_url"] = img_url
     return result_dict
